@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulación de Semáforo 3D</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <!-- Canvas 3D -->
+    <div id="canvas-container"></div>
+
+    <!-- Sidebar Izquierdo - Configuración de Tiempo -->
+    <div id="time-sidebar">
+        <h2>⏱️ Tiempo de Simulación</h2>
+
+        <!-- Configuración de Tiempo -->
+        <div class="time-section">
+            <h3>Tiempo a Simular</h3>
+            <p class="section-note">¿Cuánto tiempo de tráfico quieres simular?</p>
+            <div class="time-inputs">
+                <div class="time-input-group">
+                    <input type="number" id="simulated-hours" min="0" max="24" value="2">
+                    <label>horas</label>
+                </div>
+                <div class="time-input-group">
+                    <input type="number" id="simulated-minutes" min="0" max="59" value="0">
+                    <label>min</label>
+                </div>
+            </div>
+        </div>
+
+        <div class="time-section">
+            <h3>Duración Real</h3>
+            <p class="section-note">¿En cuánto tiempo real debe ocurrir?</p>
+            <div class="time-inputs">
+                <div class="time-input-group">
+                    <input type="number" id="real-minutes" min="0" max="60" value="0">
+                    <label>min</label>
+                </div>
+                <div class="time-input-group">
+                    <input type="number" id="real-seconds" min="1" max="59" value="30">
+                    <label>seg</label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Factor de Tiempo -->
+        <div class="time-factor-display">
+            <span class="factor-label">Factor de Velocidad:</span>
+            <span id="time-factor" class="factor-value">240x</span>
+        </div>
+
+        <button id="btn-apply-time" class="apply-time-btn">Aplicar Configuración</button>
+
+        <!-- Progreso de Simulación -->
+        <div class="simulation-progress">
+            <h3>Progreso</h3>
+
+            <div class="progress-row">
+                <span class="progress-label">Tiempo Simulado:</span>
+                <span id="simulated-elapsed" class="progress-value">0h 0m 0s</span>
+            </div>
+
+            <div class="progress-bar-container">
+                <div id="simulation-progress-bar" class="simulation-progress-bar"></div>
+            </div>
+
+            <div class="progress-row">
+                <span class="progress-label">Tiempo Real:</span>
+                <span id="real-elapsed" class="progress-value">0s</span>
+            </div>
+
+            <div class="progress-row total">
+                <span class="progress-label">Completado:</span>
+                <span id="completion-percent" class="progress-value">0%</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Panel Derecho - Control de Simulación -->
+    <div id="control-panel">
+        <h2>🚦 Control</h2>
+
+        <div class="stats-panel">
+            <div class="stat-item">
+                <span class="stat-label">Ciclo del Semáforo</span>
+                <span id="cycle-time" class="stat-value">0s / 20s</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Agentes Activos</span>
+                <span id="active-agents" class="stat-value">0</span>
+            </div>
+            <div class="stat-item accident-stat">
+                <span class="stat-label">⚠️ Accidentes</span>
+                <span id="accident-count" class="stat-value accident-value">0</span>
+            </div>
+        </div>
+
+        <!-- Barra de Ciclo del Semáforo -->
+        <div class="timeline-container">
+            <div class="timeline-bar">
+                <div id="timeline-progress" class="timeline-progress"></div>
+                <div id="timeline-marker" class="timeline-marker"></div>
+            </div>
+            <div class="timeline-labels">
+                <span>0s</span>
+                <span>10s</span>
+                <span>20s</span>
+            </div>
+        </div>
+
+        <!-- Controles -->
+        <div class="control-buttons">
+            <button id="btn-play" class="control-btn" title="Iniciar">▶</button>
+            <button id="btn-pause" class="control-btn" title="Pausar">⏸</button>
+            <button id="btn-restart" class="control-btn restart" title="Reiniciar">🔄</button>
+        </div>
+
+        <!-- Control de Velocidad -->
+        <div class="slider-section">
+            <div class="slider-header">
+                <span>Velocidad:</span>
+                <span id="speed-value">1.0x</span>
+            </div>
+            <input type="range" id="speed-slider" min="0.25" max="4" step="0.25" value="1">
+        </div>
+
+        <!-- Configuración de Spawn -->
+        <div class="config-section">
+            <h3>🎲 Probabilidad de Spawn</h3>
+
+            <div class="config-slider">
+                <div class="config-header">
+                    <span class="config-color" style="background: #3b82f6;"></span>
+                    <span>Vehículos</span>
+                    <span id="vehicle-spawn-val">30%</span>
+                </div>
+                <input type="range" id="vehicle-spawn" min="0" max="100" value="30">
+            </div>
+
+            <div class="config-slider">
+                <div class="config-header">
+                    <span class="config-color" style="background: #22c55e;"></span>
+                    <span>Bicicletas</span>
+                    <span id="bicycle-spawn-val">25%</span>
+                </div>
+                <input type="range" id="bicycle-spawn" min="0" max="100" value="25">
+            </div>
+
+            <div class="config-slider">
+                <div class="config-header">
+                    <span class="config-color" style="background: #f59e0b;"></span>
+                    <span>Peatones</span>
+                    <span id="pedestrian-spawn-val">20%</span>
+                </div>
+                <input type="range" id="pedestrian-spawn" min="0" max="100" value="20">
+            </div>
+        </div>
+
+        <!-- Configuración de Respeto -->
+        <div class="config-section">
+            <h3>🚥 % Respeto Semáforo</h3>
+
+            <div class="config-slider">
+                <div class="config-header">
+                    <span class="config-color" style="background: #3b82f6;"></span>
+                    <span>Vehículos</span>
+                    <span id="vehicle-respect-val">97%</span>
+                </div>
+                <input type="range" id="vehicle-respect" min="0" max="100" value="97">
+            </div>
+
+            <div class="config-slider">
+                <div class="config-header">
+                    <span class="config-color" style="background: #22c55e;"></span>
+                    <span>Bicicletas</span>
+                    <span id="bicycle-respect-val">95%</span>
+                </div>
+                <input type="range" id="bicycle-respect" min="0" max="100" value="95">
+            </div>
+
+            <div class="config-slider">
+                <div class="config-header">
+                    <span class="config-color" style="background: #f59e0b;"></span>
+                    <span>Peatones</span>
+                    <span id="pedestrian-respect-val">90%</span>
+                </div>
+                <input type="range" id="pedestrian-respect" min="0" max="100" value="90">
+            </div>
+        </div>
+
+        <!-- Contadores -->
+        <div class="agent-counts">
+            <div class="count-item">
+                <span class="count-color" style="background: #3b82f6;"></span>
+                <span id="vehicle-count">0</span>
+            </div>
+            <div class="count-item">
+                <span class="count-color" style="background: #22c55e;"></span>
+                <span id="bicycle-count">0</span>
+            </div>
+            <div class="count-item">
+                <span class="count-color" style="background: #f59e0b;"></span>
+                <span id="pedestrian-count">0</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+            "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+        }
+    }
+    </script>
+    <script type="module" src="js/main.js"></script>
+</body>
+
+</html>
